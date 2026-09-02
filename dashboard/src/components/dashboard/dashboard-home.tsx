@@ -9,6 +9,7 @@ import { IssuesTrendChart } from "@/components/charts/issues-trend-chart";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { IssuesTable } from "@/components/dashboard/issues-table";
 import { KpiCard } from "@/components/dashboard/kpi-card";
+import { DownloadSampleRecordingsButton } from "@/components/actions/download-sample-recordings-button";
 import { TopHeader } from "@/components/layout/top-header";
 
 interface DashboardHomeProps {
@@ -40,6 +41,9 @@ export function DashboardHome({ insights, calls }: DashboardHomeProps) {
         <div className="rounded-2xl bg-white p-6 text-center shadow-sm sm:p-10">
           <h2 className="text-lg font-semibold sm:text-xl">{LABELS.getStartedTitle}</h2>
           <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">{LABELS.getStartedBody}</p>
+          <div className="mt-6 flex justify-center">
+            <DownloadSampleRecordingsButton />
+          </div>
         </div>
       ) : (
         <>

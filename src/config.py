@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     cluster_similarity_threshold: float = 0.82
     min_severity: int = 3
 
+    gemini_max_retries: int = 5
+    gemini_retry_base_delay_seconds: float = 5.0
+    gemini_min_request_interval_seconds: float = 13.0
+
     api_host: str = "0.0.0.0"
     api_port: int = 8000
 

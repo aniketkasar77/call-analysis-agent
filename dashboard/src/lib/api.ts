@@ -1,5 +1,8 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+export const callAudioUrl = (callId: string) =>
+  `${API_URL}/calls/${encodeURIComponent(callId)}/audio`;
+
 export interface InsightSummary {
   insight_id: string;
   title: string;
@@ -30,6 +33,7 @@ export interface InsightDetail extends InsightSummary {
 export interface CallRecord {
   call_id: string;
   status: string;
+  pipeline_error?: string[] | null;
   transcript: { full_text: string; created_at?: string } | null;
   analysis: {
     primary_reason: string;
@@ -93,4 +97,18 @@ export const api = {
   },
   findRecurringIssues: () => fetchJson<AggregateResult>("/pipeline/aggregate", { method: "POST" }),
   runPipeline: (callId: string) => fetchJson(`/pipeline/run/${callId}`, { method: "POST" }),
+  downloadSampleRecordings: async () => {
+    const res = await fetch(`${API_URL}/calls/sample-recordings/download`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || "Download failed");
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "sample-call-recordings.zip";
+    link.click();
+    URL.revokeObjectURL(url);
+  },
 };

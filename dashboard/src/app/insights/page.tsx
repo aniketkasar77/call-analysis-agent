@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { FindIssuesButton } from "@/components/actions/find-issues-button";
 import { api, InsightSummary } from "@/lib/api";
 import {
   LABELS,
@@ -27,17 +28,23 @@ export default async function InsightsPage() {
 
   return (
     <div className="min-w-0 space-y-6">
-      <div>
-        <h1 className="text-xl font-bold sm:text-2xl">{LABELS.recurringIssues}</h1>
-        <p className="text-sm text-muted-foreground">
-          Patterns detected across your support calls
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold sm:text-2xl">{LABELS.recurringIssues}</h1>
+          <p className="text-sm text-muted-foreground">
+            Patterns detected across your support calls
+          </p>
+        </div>
+        <FindIssuesButton className="w-full sm:w-auto" />
       </div>
 
       {insights.length === 0 ? (
         <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
           <p className="text-muted-foreground">{LABELS.noIssuesYet}</p>
           <p className="mt-2 text-sm text-muted-foreground">{LABELS.getStartedBody}</p>
+          <div className="mt-4 flex justify-center">
+            <FindIssuesButton />
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

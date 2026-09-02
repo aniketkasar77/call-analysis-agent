@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { AddRecordingsButton } from "@/components/actions/add-recordings-button";
+import { DownloadSampleRecordingsButton } from "@/components/actions/download-sample-recordings-button";
 import { FindIssuesButton } from "@/components/actions/find-issues-button";
 
 interface TopHeaderProps {
@@ -26,6 +27,7 @@ export function TopHeader({ search = "", onSearchChange, showActions = true }: T
       {showActions && (
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <AddRecordingsButton className="w-full sm:w-auto" />
+          <DownloadSampleRecordingsButton className="w-full sm:w-auto" />
           <FindIssuesButton className="w-full sm:w-auto" />
         </div>
       )}

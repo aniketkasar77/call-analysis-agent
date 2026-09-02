@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from src.agents.state import PipelineState
 from src.models.schemas import Insight, InsightCluster, InsightIndexEntry
 from src.services.gemini import GeminiService
+from src.services.gemini_errors import format_gemini_error
 from src.storage import get_storage
 
 
@@ -76,5 +77,5 @@ def synthesize_insight_node(state: PipelineState) -> PipelineState:
         storage.update_insight_index(index_entries)
         return {**state, "surfaced_insights": surfaced, "errors": errors}
     except Exception as exc:
-        errors.append(f"synthesize: {exc}")
+        errors.append(f"synthesize: {format_gemini_error(exc)}")
         return {**state, "surfaced_insights": surfaced, "errors": errors}

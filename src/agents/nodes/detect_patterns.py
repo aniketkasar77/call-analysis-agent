@@ -5,6 +5,7 @@ from src.config import get_settings
 from src.models.schemas import CallAnalysis
 from src.services.clustering import cluster_analyses, compute_trends, embed_texts
 from src.services.gemini import GeminiService
+from src.services.gemini_errors import format_gemini_error
 from src.storage import get_storage
 
 
@@ -48,5 +49,5 @@ def detect_patterns_node(state: PipelineState) -> PipelineState:
             cluster_dicts.append(data)
         return {**state, "candidate_clusters": cluster_dicts, "errors": errors}
     except Exception as exc:
-        errors.append(f"detect_patterns: {exc}")
+        errors.append(f"detect_patterns: {format_gemini_error(exc)}")
         return {**state, "candidate_clusters": [], "errors": errors}
