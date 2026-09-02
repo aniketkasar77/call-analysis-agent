@@ -1,10 +1,16 @@
+import io
 import uuid
+import zipfile
 from pathlib import Path
 
-from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, StreamingResponse
 
-from src.agents.graph import run_batch_pipeline, run_per_call_pipeline
+from src.config import get_settings
+
+from src.agents.graph import run_batch_pipeline
+from src.services.pipeline_queue import enqueue_per_call_pipeline
 from src.storage import get_storage
 
 app = FastAPI(title="Call Analysis Agent", version="1.0.0")
@@ -23,16 +29,11 @@ def health():
     return {"status": "ok"}
 
 
-async def _queue_call_upload(
-    background_tasks: BackgroundTasks,
-    storage,
-    filename: str,
-    data: bytes,
-) -> dict:
+async def _queue_call_upload(storage, filename: str, data: bytes) -> dict:
     call_id = str(uuid.uuid4())
     extension = Path(filename or "audio.wav").suffix.lstrip(".") or "wav"
     audio_path = storage.upload_raw_audio(call_id, data, extension)
-    background_tasks.add_task(run_per_call_pipeline, call_id, audio_path)
+    enqueue_per_call_pipeline(call_id, audio_path)
     return {
         "call_id": call_id,
         "filename": filename or f"{call_id}.{extension}",
@@ -42,20 +43,17 @@ async def _queue_call_upload(
 
 
 @app.post("/calls/upload")
-async def upload_call(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+async def upload_call(file: UploadFile = File(...)):
     data = await file.read()
     if not data:
         raise HTTPException(status_code=400, detail="Empty file")
     storage = get_storage()
-    result = await _queue_call_upload(background_tasks, storage, file.filename or "audio.wav", data)
+    result = await _queue_call_upload(storage, file.filename or "audio.wav", data)
     return result
 
 
 @app.post("/calls/upload/batch")
-async def upload_calls_batch(
-    background_tasks: BackgroundTasks,
-    files: list[UploadFile] = File(...),
-):
+async def upload_calls_batch(files: list[UploadFile] = File(...)):
     if not files:
         raise HTTPException(status_code=400, detail="At least one file is required")
 
@@ -66,7 +64,7 @@ async def upload_calls_batch(
         if not data:
             continue
         uploads.append(
-            await _queue_call_upload(background_tasks, storage, file.filename or "audio.wav", data)
+            await _queue_call_upload(storage, file.filename or "audio.wav", data)
         )
 
     if not uploads:
@@ -81,7 +79,9 @@ def run_pipeline(call_id: str):
     audio_path = storage.get_raw_audio_key(call_id)
     if not audio_path:
         raise HTTPException(status_code=404, detail=f"No raw audio for call {call_id}")
-    return run_per_call_pipeline(call_id, audio_path)
+    storage.clear_pipeline_error(call_id)
+    enqueue_per_call_pipeline(call_id, audio_path)
+    return {"call_id": call_id, "status": "processing"}
 
 
 @app.post("/pipeline/aggregate")
@@ -111,6 +111,13 @@ def aggregate():
         )
     else:
         message = "No recurring issues surfaced. Your calls appear to cover different topics."
+
+    pipeline_errors = result.get("errors", [])
+    if pipeline_errors:
+        first_error = pipeline_errors[0]
+        if ": " in first_error:
+            first_error = first_error.split(": ", 1)[1]
+        message = first_error
 
     return {
         "surfaced_count": surfaced_count,
@@ -144,6 +151,45 @@ def get_insight(insight_id: str):
     return {**insight, "supporting_calls": supporting_calls}
 
 
+SAMPLE_AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".ogg", ".flac", ".webm", ".aac"}
+
+AUDIO_MEDIA_TYPES = {
+    "mp3": "audio/mpeg",
+    "wav": "audio/wav",
+    "m4a": "audio/mp4",
+    "ogg": "audio/ogg",
+    "flac": "audio/flac",
+    "webm": "audio/webm",
+    "aac": "audio/aac",
+}
+
+
+@app.get("/calls/sample-recordings/download")
+def download_sample_recordings():
+    sample_dir = Path(get_settings().storage_path) / "sample-call-recordings"
+    if not sample_dir.is_dir():
+        raise HTTPException(status_code=404, detail="Sample recordings not found")
+
+    files = sorted(
+        p for p in sample_dir.iterdir()
+        if p.is_file() and p.suffix.lower() in SAMPLE_AUDIO_EXTENSIONS
+    )
+    if not files:
+        raise HTTPException(status_code=404, detail="No sample recordings available")
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        for file_path in files:
+            archive.write(file_path, arcname=file_path.name)
+    buffer.seek(0)
+
+    return StreamingResponse(
+        buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": 'attachment; filename="sample-call-recordings.zip"'},
+    )
+
+
 @app.get("/calls")
 def list_calls():
     storage = get_storage()
@@ -151,8 +197,11 @@ def list_calls():
     for call_id in storage.list_raw_calls():
         transcript = storage.get_transcript(call_id)
         analysis = storage.get_analysis(call_id)
+        pipeline_error = storage.get_pipeline_error(call_id)
         if analysis:
             status = "analyzed"
+        elif pipeline_error:
+            status = "failed"
         elif transcript:
             status = "transcribed"
         else:
@@ -162,8 +211,25 @@ def list_calls():
             "transcript": transcript,
             "analysis": analysis,
             "status": status,
+            "pipeline_error": pipeline_error.get("errors") if pipeline_error else None,
         })
     return records
+
+
+@app.get("/calls/{call_id}/audio")
+def get_call_audio(call_id: str):
+    storage = get_storage()
+    audio_key = storage.get_raw_audio_key(call_id)
+    if not audio_key:
+        raise HTTPException(status_code=404, detail="Audio not found")
+
+    file_path = Path(get_settings().storage_path) / audio_key
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Audio file missing")
+
+    extension = file_path.suffix.lstrip(".").lower()
+    media_type = AUDIO_MEDIA_TYPES.get(extension, "application/octet-stream")
+    return FileResponse(file_path, media_type=media_type, filename=file_path.name)
 
 
 @app.get("/calls/{call_id}")

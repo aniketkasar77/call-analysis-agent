@@ -1,5 +1,6 @@
 export const LABELS = {
   addRecordings: "Add Recordings",
+  downloadSampleRecordings: "Download Sample Recordings",
   findRecurringIssues: "Find Recurring Issues",
   recurringIssues: "Recurring Issues",
   yourRecordings: "Your Recordings",
@@ -27,6 +28,11 @@ export const LABELS = {
   noRecordingsYet: "No recordings yet. Add your first batch above.",
   processingComplete: "Processing complete",
   recordingsAdded: (n: number) => `${n} recording${n === 1 ? "" : "s"} added`,
+  viewTranscript: "View transcript",
+  hideTranscript: "Hide transcript",
+  listenToRecording: "Listen to recording",
+  hidePlayer: "Hide player",
+  transcriptUnavailable: "Transcript not ready yet",
 } as const;
 
 export function priorityLabel(severity: number): string {
@@ -71,12 +77,14 @@ export function trendClass(trend: string): string {
 
 export function statusLabel(status: string): string {
   if (status === "analyzed") return "Ready";
+  if (status === "failed") return "Needs retry";
   if (status === "transcribed") return "Transcribing";
   return "Processing";
 }
 
 export function statusClass(status: string): string {
   if (status === "analyzed") return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (status === "failed") return "bg-red-50 text-red-700 border-red-200";
   if (status === "transcribed") return "bg-amber-50 text-amber-700 border-amber-200";
   return "bg-slate-50 text-slate-600 border-slate-200";
 }

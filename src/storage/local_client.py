@@ -77,6 +77,26 @@ class LocalStorageClient:
         matches = [k for k in self.list_keys(f"{self.PREFIX_RAW}/") if k.split("/")[-1].startswith(f"{call_id}.")]
         return matches[0] if matches else None
 
+    def save_pipeline_error(self, call_id: str, errors: List[str]) -> str:
+        return self.upload_json(
+            f"calls/errors/{call_id}.json",
+            {
+                "call_id": call_id,
+                "errors": errors,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            },
+        )
+
+    def get_pipeline_error(self, call_id: str) -> Optional[Dict[str, Any]]:
+        key = f"calls/errors/{call_id}.json"
+        return self.download_json(key) if self.exists(key) else None
+
+    def clear_pipeline_error(self, call_id: str) -> None:
+        key = f"calls/errors/{call_id}.json"
+        path = self._path(key)
+        if path.exists():
+            path.unlink()
+
     def list_analyses_since(self, days: int) -> List[Dict[str, Any]]:
         cutoff = datetime.now(timezone.utc) - timedelta(days=days)
         analyses: List[Dict[str, Any]] = []

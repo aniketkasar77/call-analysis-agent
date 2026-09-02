@@ -23,8 +23,11 @@ export function FindIssuesButton({ className }: FindIssuesButtonProps) {
     setMessage("");
     try {
       const result = await api.findRecurringIssues();
-      setMessage(result.message);
-      setIsSuccess(result.surfaced_count > 0);
+      const errorMessage = result.errors?.length
+        ? result.errors[result.errors.length - 1].replace(/^(detect_patterns|synthesize):\s*/i, "")
+        : "";
+      setMessage(errorMessage || result.message);
+      setIsSuccess(result.surfaced_count > 0 && !result.errors?.length);
       router.refresh();
     } catch (e) {
       setMessage((e as Error).message);
