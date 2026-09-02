@@ -10,4 +10,5 @@ class PipelineState(TypedDict, total=False):
     batch_analyses: List[dict]
     candidate_clusters: List[dict]
     surfaced_insights: List[dict]
+    aggregation_stats: dict
     errors: List[str]

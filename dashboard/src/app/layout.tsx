@@ -1,24 +1,31 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { MobileHeader } from "@/components/layout/mobile-header";
 import { Sidebar } from "@/components/layout/sidebar";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-geist-sans" });
 
 export const metadata: Metadata = {
-  title: "Call Analyse Agent",
-  description: "Multi-agent call analysis dashboard",
+  title: "CallAI — Support Insights",
+  description: "Understand recurring issues from your support calls",
+  icons: { icon: "/logo.png", apple: "/logo.png" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans`}>
-        <div className="flex min-h-screen">
+      <body className={`${inter.variable} overflow-x-hidden font-sans`}>
+        <div className="flex min-h-screen page-gradient">
           <Sidebar />
-          <main className="flex-1 overflow-auto bg-grid-pattern bg-[size:48px_48px]">
-            <div className="min-h-screen bg-background/80 backdrop-blur-[2px]">{children}</div>
-          </main>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <MobileHeader />
+            <main className="min-w-0 flex-1 overflow-x-hidden pb-20 md:pb-0">
+              <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-6">
+                {children}
+              </div>
+            </main>
+          </div>
         </div>
       </body>
     </html>

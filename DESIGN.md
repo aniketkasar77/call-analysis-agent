@@ -44,3 +44,7 @@ A D2C brand handling thousands of support calls per week needs to identify **rec
 ## 6. Tech Stack
 
 LangGraph · Gemini · faster-whisper · Local filesystem · FastAPI · Next.js
+
+## 7. Dashboard UX
+
+The dashboard uses plain business language (e.g. "Find Recurring Issues" instead of "Run Aggregation", priority labels instead of raw severity scores). Users upload multiple recordings from the main dashboard and view trend charts for calls reviewed and issues found over time.
