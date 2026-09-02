@@ -5,8 +5,10 @@ from src.models.schemas import InsightCluster, Trend
 
 def rank_insights_node(state: PipelineState) -> PipelineState:
     settings = get_settings()
+    raw_clusters = state.get("candidate_clusters", [])
+    max_frequency = max((c.get("frequency", 0) for c in raw_clusters), default=0)
     ranked = []
-    for raw in state.get("candidate_clusters", []):
+    for raw in raw_clusters:
         cluster = InsightCluster.model_validate(raw)
         if cluster.frequency < settings.min_cluster_size:
             continue
@@ -15,4 +17,15 @@ def rank_insights_node(state: PipelineState) -> PipelineState:
         if cluster.avg_severity < settings.min_severity and cluster.trend != Trend.UP:
             continue
         ranked.append(cluster.model_dump(mode="json"))
-    return {**state, "candidate_clusters": ranked, "errors": list(state.get("errors", []))}
+    stats = {
+        "clusters_detected": len(raw_clusters),
+        "max_cluster_size": max_frequency,
+        "clusters_qualified": len(ranked),
+        "min_cluster_size": settings.min_cluster_size,
+    }
+    return {
+        **state,
+        "candidate_clusters": ranked,
+        "aggregation_stats": stats,
+        "errors": list(state.get("errors", [])),
+    }

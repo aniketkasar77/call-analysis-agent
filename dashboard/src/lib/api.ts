@@ -30,14 +30,34 @@ export interface InsightDetail extends InsightSummary {
 export interface CallRecord {
   call_id: string;
   status: string;
-  transcript: { full_text: string } | null;
+  transcript: { full_text: string; created_at?: string } | null;
   analysis: {
     primary_reason: string;
     category: string;
     severity: number;
     upstream_issue_hypothesis: string;
     sentiment?: string;
+    created_at?: string;
   } | null;
+}
+
+export interface AggregateResult {
+  surfaced_count: number;
+  analyzed_calls: number;
+  clusters_detected: number;
+  max_cluster_size: number;
+  min_cluster_size: number;
+  message: string;
+  errors?: string[];
+}
+
+export interface BatchUploadResult {
+  count: number;
+  uploads: Array<{
+    call_id: string;
+    filename: string;
+    status: string;
+  }>;
 }
 
 async function fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
@@ -64,7 +84,13 @@ export const api = {
     if (!res.ok) throw new Error("Upload failed");
     return res.json() as Promise<{ call_id: string; status: string }>;
   },
-  runAggregate: () => fetchJson("/pipeline/aggregate", { method: "POST" }),
-  runPipeline: (callId: string) =>
-    fetchJson(`/pipeline/run/${callId}`, { method: "POST" }),
+  uploadCalls: async (files: File[]): Promise<BatchUploadResult> => {
+    const form = new FormData();
+    files.forEach((f) => form.append("files", f));
+    const res = await fetch(`${API_URL}/calls/upload/batch`, { method: "POST", body: form });
+    if (!res.ok) throw new Error("Upload failed");
+    return res.json();
+  },
+  findRecurringIssues: () => fetchJson<AggregateResult>("/pipeline/aggregate", { method: "POST" }),
+  runPipeline: (callId: string) => fetchJson(`/pipeline/run/${callId}`, { method: "POST" }),
 };

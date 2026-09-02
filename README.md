@@ -17,23 +17,27 @@ uvicorn src.api.main:app --reload --port 8000
 
 # Terminal 2 — Dashboard
 cd dashboard && npm install && npm run dev
-
-# Seed demo data and run aggregation
-python3 scripts/seed_sample_calls.py
-python3 scripts/run_batch.py --aggregate
 ```
 
 Open **http://localhost:3000** for the dashboard.
+
+## Workflow
+
+1. Click **Add Recordings** on the dashboard to upload one or many call audio files
+2. Wait for calls to show status **Ready** on the Recordings page
+3. Click **Find Recurring Issues** once you have at least 5 similar reviewed calls
+4. View recurring issues, trends, and recommended actions on the dashboard
 
 ## API Endpoints
 
 | Method | Route | Description |
 |--------|-------|-------------|
-| POST | `/calls/upload` | Upload audio, trigger pipeline |
-| POST | `/pipeline/run/{call_id}` | Process single call |
-| POST | `/pipeline/aggregate` | Run pattern detection |
-| GET | `/insights` | List surfaced insights |
-| GET | `/insights/{id}` | Insight detail |
+| POST | `/calls/upload` | Upload single audio file |
+| POST | `/calls/upload/batch` | Upload multiple audio files |
+| POST | `/pipeline/run/{call_id}` | Re-process single call |
+| POST | `/pipeline/aggregate` | Find recurring issues across calls |
+| GET | `/insights` | List surfaced issues |
+| GET | `/insights/{id}` | Issue detail |
 | GET | `/calls` | List processed calls |
 | GET | `/health` | Health check |
 
@@ -41,10 +45,9 @@ Open **http://localhost:3000** for the dashboard.
 
 Next.js + shadcn/ui + Tailwind dashboard in `dashboard/`:
 
-- **Insights** — surfaced upstream issues with severity, trend, confidence
-- **Calls** — per-call status, search, retry analysis
-- **Upload** — drag-and-drop audio upload
-- **Insight Detail** — summary, recommended fix, supporting calls
+- **Dashboard** — KPI cards, trend charts, top issues, recent activity
+- **Your Recordings** — upload status per call (plain-language labels)
+- **Recurring Issues** — detected patterns with priority and match strength
 
 Set `NEXT_PUBLIC_API_URL=http://localhost:8000` in `dashboard/.env.local` if needed.
 

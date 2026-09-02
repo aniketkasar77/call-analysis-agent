@@ -4,44 +4,26 @@
 
 @layer base {
   :root {
-    --background: 220 20% 97%;
+    --background: 330 30% 98%;
     --foreground: 224 30% 12%;
     --card: 0 0% 100%;
     --card-foreground: 224 30% 12%;
-    --primary: 239 84% 57%;
+    --primary: 327 100% 45%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 93%;
+    --secondary: 330 20% 96%;
     --secondary-foreground: 224 20% 25%;
-    --muted: 220 14% 94%;
-    --muted-foreground: 220 10% 46%;
-    --accent: 239 60% 96%;
-    --accent-foreground: 239 84% 40%;
+    --muted: 330 20% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 327 80% 96%;
+    --accent-foreground: 327 100% 38%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 88%;
-    --input: 220 13% 88%;
-    --ring: 239 84% 57%;
-    --radius: 0.75rem;
-  }
-
-  .dark {
-    --background: 224 30% 8%;
-    --foreground: 210 20% 96%;
-    --card: 224 28% 11%;
-    --card-foreground: 210 20% 96%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 224 20% 16%;
-    --secondary-foreground: 210 20% 90%;
-    --muted: 224 20% 16%;
-    --muted-foreground: 220 10% 60%;
-    --accent: 239 40% 18%;
-    --accent-foreground: 239 84% 80%;
-    --destructive: 0 62% 45%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 224 20% 18%;
-    --input: 224 20% 18%;
-    --ring: 239 84% 67%;
+    --border: 330 15% 91%;
+    --input: 330 15% 91%;
+    --ring: 327 100% 45%;
+    --radius: 1rem;
+    --sidebar: 0 0% 100%;
+    --brand: #e6007e;
   }
 }
 
@@ -52,4 +34,44 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+}
+
+@layer utilities {
+  .page-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(327 60% 97%) 0%,
+      hsl(300 40% 97%) 45%,
+      hsl(220 50% 97%) 100%
+    );
+  }
+}
+
+/* Critical nav layout — survives Tailwind compile failures */
+@media (max-width: 767px) {
+  .app-sidebar-desktop {
+    display: none !important;
+  }
+  .app-nav-mobile-bottom {
+    display: flex !important;
+  }
+  .app-header-mobile {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .app-sidebar-desktop {
+    display: flex !important;
+  }
+  .app-nav-mobile-bottom {
+    display: none !important;
+  }
+  .app-header-mobile {
+    display: none !important;
+  }
+}
+
+.file-input-hidden {
+  display: none !important;
 }
