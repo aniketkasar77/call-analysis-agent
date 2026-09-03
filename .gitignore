@@ -9,7 +9,6 @@ build/
 .pytest_cache/
 .DS_Store
 *.wav
-data/
 dashboard/node_modules/
 dashboard/.next/
 dashboard/.env.local
